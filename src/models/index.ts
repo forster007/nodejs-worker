@@ -4,7 +4,15 @@ export interface IndexInterface {
   cnpj: string;
   name: string;
   responses: {
+    exatodigital: {
+      data: object;
+      status: string;
+    };
     neoway: {
+      data: object;
+      status: string;
+    };
+    serasa: {
       data: object;
       status: string;
     };
@@ -18,7 +26,15 @@ const schema = new Schema<IndexInterface>(
     cnpj: { type: String, required: true },
     name: { type: String, required: true },
     responses: {
+      exatodigital: {
+        data: { type: Object },
+        status: { type: String },
+      },
       neoway: {
+        data: { type: Object },
+        status: { type: String },
+      },
+      serasa: {
         data: { type: Object },
         status: { type: String },
       },
