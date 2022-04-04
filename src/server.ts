@@ -19,7 +19,7 @@ app.listen(SERVER_PORT, async () => {
 
   try {
     await mongoService({ logger });
-    await queueService.villelaBrasilQueueOne.listenToQueue();
+    await queueService.NeoWay.listenToQueue();
 
     logger.success(`Service started on port ${SERVER_PORT}`);
   } catch (err) {
