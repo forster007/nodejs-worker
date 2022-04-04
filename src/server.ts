@@ -19,11 +19,11 @@ app.listen(SERVER_PORT, async () => {
 
   try {
     await mongoService({ logger });
-
-    await queueService.villelaBrasilQueueOne(logger).listenToQueue();
+    await queueService.villelaBrasilQueueOne.listenToQueue();
 
     logger.success(`Service started on port ${SERVER_PORT}`);
   } catch (err) {
+    console.log(err);
     logger.error(`Service catch error`);
   }
 });
