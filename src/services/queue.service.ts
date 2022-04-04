@@ -10,6 +10,7 @@ import {
 import EventEmitter from "events";
 import Queues from "../config/queues.config.json";
 import IndexController from "../controllers";
+import ServiceRequest from "./axios.service";
 import makeLogger from "./logger.service";
 
 interface ServiceBusProps {
@@ -38,24 +39,34 @@ class ServiceBus extends EventEmitter {
   }
 
   async handleSuccess(props: ServiceBusReceivedMessage) {
-    const { name, status, transactionId } = props.body;
+    const { cnpj, status, transactionId, ...body } = props.body;
     const logger = makeLogger(transactionId, process.env.LOG_LEVEL);
-    logger.info(`New message received with props ${JSON.stringify({ name, status, transactionId })}`);
+    logger.info(`New message received with props ${JSON.stringify({ body, transactionId })}`);
 
-    if (status === "requested" && transactionId) {
+    if (transactionId) {
       logger.info(`Message received fit with condition`);
 
-      let newStatus = "processing";
       const indexController = new IndexController();
-      await indexController.findOneAndUpdateStatus(status, transactionId, newStatus);
-      logger.info(`Changed status on Database to processing`);
+      let actualStatus = status;
+      let newStatus = "processing";
 
-      await delay(5000);
+      await indexController.findOneAndUpdateStatus(actualStatus, transactionId, newStatus);
+      logger.info(`Changed NEOWAY status on Database to ${newStatus}`);
 
-      newStatus = "completed";
-      await indexController.findOneAndUpdateStatus(status, transactionId, newStatus);
-      logger.info(`Changed status on Database to completed`);
-      logger.success(`All steps finished successfully on request`);
+      const serviceRequest = new ServiceRequest();
+      await serviceRequest.refreshToken();
+      const { data } = await serviceRequest.getCompany(cnpj);
+
+      if (data) {
+        await indexController.findOneAndInsertNeoWayData(transactionId, data);
+        actualStatus = newStatus;
+        newStatus = "completed";
+
+        await indexController.findOneAndUpdateStatus(actualStatus, transactionId, newStatus);
+        logger.info(`Changed NEOWAY status on Database to ${newStatus}`);
+
+        logger.success(`All steps finished successfully on request`);
+      }
     }
   }
 
